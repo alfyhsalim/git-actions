@@ -1,0 +1,104 @@
+name: Calculator-POC
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  XRAY_PROJECT_KEY: XSP
+
+jobs:
+  build-test-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # ------------------------------------------------------------------
+      # Checkout
+      # ------------------------------------------------------------------
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # ------------------------------------------------------------------
+      # Setup Java 17
+      # ------------------------------------------------------------------
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: maven
+
+      # ------------------------------------------------------------------
+      # Build Test JaCoCo
+      # ------------------------------------------------------------------
+      - name: Maven Build, Run Unit Tests, Generate Coverage
+        run: mvn clean install
+
+      # ------------------------------------------------------------------
+      # Get Xray Token
+      # ------------------------------------------------------------------
+      - name: Authenticate to Xray
+        id: xray-auth
+        run: |
+          TOKEN=$(curl -s \
+            -X POST \
+            https://xray.cloud.getxray.app/api/v2/authenticate \
+            -H "Content-Type: application/json" \
+            -d '{
+              "client_id":"${{ secrets.XRAY_CLIENT_ID }}",
+              "client_secret":"${{ secrets.XRAY_CLIENT_SECRET }}"
+            }' | tr -d '"')
+
+          echo "XRAY_TOKEN=$TOKEN" >> $GITHUB_ENV
+
+      # ------------------------------------------------------------------
+      # Upload Junit Results to Xray
+      # ------------------------------------------------------------------
+      - name: Upload Test Results to Xray
+        run: |
+
+          for report in target/surefire-reports/*.xml
+          do
+            [ -f "$report" ] || continue
+
+            curl --fail -X POST \
+            -H "Authorization: Bearer $XRAY_TOKEN" \
+            -H "Content-Type: text/xml" \
+            --data-binary @"$report" \
+            "https://xray.cloud.getxray.app/api/v2/import/execution/junit?projectKey=${XRAY_PROJECT_KEY}"
+          done
+
+      # ------------------------------------------------------------------
+      # SONAR QUALITY GATE
+      # ------------------------------------------------------------------
+      - name: SonarQube Quality Gate
+        uses: sonarsource/sonarqube-quality-gate-action@master
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: http://172.20.101.13:9000
+
+      # ------------------------------------------------------------------
+      # Publish Test Results
+      # ------------------------------------------------------------------
+      - name: Upload Surefire Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports
+
+      # ------------------------------------------------------------------
+      # Publish JaCoCo Report
+      # ------------------------------------------------------------------
+      - name: Upload Coverage Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: target/site/jacoco
