@@ -73,7 +73,9 @@ jobs:
             }' | tr -d '"')
 
           echo "XRAY_TOKEN=$TOKEN" >> $GITHUB_ENV
-          echo "XRAY_EXEC_KEY=${GITHUB_REPOSITORY}-${GITHUB_SHA::7}" >> $GITHUB_ENV
+          echo "PROJECT_NAME=Calculator-POC" >> $GITHUB_ENV
+          echo "BUILD_NAME=Calculator-POC-${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
+          echo "REVISION=${GITHUB_REF_NAME}-${$(echo $GITHUB_SHA | cut -c1-7)}" >> $GITHUB_ENV
 
       # ------------------------------------------------------------------
       # Upload Junit Results to Xray
