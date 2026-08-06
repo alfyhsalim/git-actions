@@ -37,9 +37,9 @@ jobs:
         run: |
           docker build --target build \
             -t calculator-build .
-          rm -rf target && mkdir -p target
+          rm -rf target
           container=$(docker create calculator-build)
-          docker cp ${container}:/src/target ./target
+          docker cp ${container}:/src/target .
           docker rm ${container}
 
       # ------------------------------------------------------------------
