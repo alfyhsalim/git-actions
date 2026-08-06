@@ -5,6 +5,13 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      target:
+        type: choice
+        options:
+          - ONPREM
+          - AWS
+          - BOTH
 
 env:
   XRAY_PROJECT_KEY: XSP
@@ -24,20 +31,24 @@ jobs:
           fetch-depth: 1
 
       # ------------------------------------------------------------------
-      # Setup Java 17
+      # Build and test inside Maven container
       # ------------------------------------------------------------------
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-          cache: maven
+      - name: Build and test inside Maven container
+        run: |
+          docker build --target build \
+            -t calculator-build .
+          rm -rf target && mkdir -p target
+          container=$(docker create calculator-build)
+          docker cp ${container}:/src/target ./target
+          docker rm ${container}
 
       # ------------------------------------------------------------------
-      # Build Test JaCoCo
+      # Build runtime Docker image
       # ------------------------------------------------------------------
-      - name: Maven Build, Run Unit Tests, Generate Coverage
-        run: mvn clean install
+      - name: Build runtime Docker Image
+        run: |
+          docker build --target runtime \
+            -t calculator:${{ github.sha }} .
 
       # ------------------------------------------------------------------
       # Get Xray Token
@@ -55,6 +66,7 @@ jobs:
             }' | tr -d '"')
 
           echo "XRAY_TOKEN=$TOKEN" >> $GITHUB_ENV
+          echo "XRAY_EXEC_KEY=${GITHUB_REPOSITORY}-${GITHUB_SHA::7}" >> $GITHUB_ENV
 
       # ------------------------------------------------------------------
       # Upload Junit Results to Xray
@@ -70,26 +82,36 @@ jobs:
             -H "Authorization: Bearer $XRAY_TOKEN" \
             -H "Content-Type: text/xml" \
             --data-binary @"$report" \
-            "https://xray.cloud.getxray.app/api/v2/import/execution/junit?projectKey=${XRAY_PROJECT_KEY}"
+            "https://xray.cloud.getxray.app/api/v2/import/execution/junit?projectKey=${XRAY_PROJECT_KEY}&testExecKey=${XRAY_EXEC_KEY}"
           done
 
-      # ------------------------------------------------------------------
-      # DOCKER BUILD
-      # ------------------------------------------------------------------
+      - name: SonarQube Analysis
+        run: |
+          mvn sonar:sonar \
+            -DskipTests \
+            -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }} \
+            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+
       - name: Build Docker Image
         run: |
-          docker build -t calculator:${{ github.sha }} .
+          docker build \
+            -t calculator:${{ github.sha }} .
 
-      - name: Save Docker Image
-        run: |
-          docker save calculator:${{ github.sha }} \
-          -o calculator-image.tar
-
-      - name: Upload Docker Artifact
-        uses: actions/upload-artifact@v4
+      - name: Login to Docker Registry
+        if: ${{ secrets.DOCKER_REGISTRY != '' && secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != '' }}
+        uses: docker/login-action@v5
         with:
-          name: calculator-image
-          path: calculator-image.tar          
+          registry: ${{ secrets.DOCKER_REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Tag and Push Docker Image (to Nexus / Registry)
+        if: ${{ secrets.DOCKER_REGISTRY != '' && secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != '' }}
+        run: |
+          REG=${{ secrets.DOCKER_REGISTRY }}
+          IMAGE=${REG}/${{ github.repository }}:${{ github.sha }}
+          docker tag calculator:${{ github.sha }} ${IMAGE}
+          docker push ${IMAGE}
 
       # ------------------------------------------------------------------
       # Publish Test Results
@@ -110,3 +132,9 @@ jobs:
         with:
           name: jacoco-report
           path: target/site/jacoco
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: application-jar
+          path: target/*.jar

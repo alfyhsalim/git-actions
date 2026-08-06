@@ -13,6 +13,13 @@
         <maven.compiler.release>17</maven.compiler.release>
         <junit.jupiter.version>5.10.2</junit.jupiter.version>
         <jacoco.version>0.8.12</jacoco.version>
+        <sonar.projectKey>${project.groupId}:${project.artifactId}</sonar.projectKey>
+        <sonar.projectName>${project.name}</sonar.projectName>
+        <sonar.projectVersion>${project.version}</sonar.projectVersion>
+        <sonar.sources>src/main/java</sonar.sources>
+        <sonar.tests>src/test/java</sonar.tests>
+        <sonar.java.binaries>target/classes</sonar.java.binaries>
+        <sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
     <dependencies>
@@ -36,6 +43,9 @@
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <version>${jacoco.version}</version>
+                <configuration>
+                    <minimum>0.80</minimum>
+                </configuration>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>
@@ -49,8 +59,17 @@
                         <goals>
                             <goal>report</goal>
                         </goals>
+                        <configuration>
+                            <xml>true</xml>
+                        </configuration>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>3.11.0.2856</version>
             </plugin>
         </plugins>
     </build>
