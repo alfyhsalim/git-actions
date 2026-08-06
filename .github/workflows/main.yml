@@ -90,6 +90,9 @@ jobs:
           docker build \
             -t calculator:${{ github.sha }} .
 
+      - name: Verify Image
+        run: |
+          docker images
 
       - name: Login to Docker Registry
         uses: docker/login-action@v3
@@ -99,9 +102,11 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Tag and Push Docker Image (to Nexus / Registry)
+        env:
+          IMAGE_NAME: ash0482/github-poc
         run: |
           REG=${{ secrets.DOCKER_REGISTRY }}
-          IMAGE=${REG}/${{ github.repository }}:${{ github.sha }}
+          IMAGE=${{ env.IMAGE_NAME }}:${{ github.sha }}
           docker tag calculator:${{ github.sha }} ${IMAGE}
           docker push ${IMAGE}
 
