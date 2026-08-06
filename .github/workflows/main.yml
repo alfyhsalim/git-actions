@@ -75,7 +75,8 @@ jobs:
           echo "XRAY_TOKEN=$TOKEN" >> $GITHUB_ENV
           echo "PROJECT_NAME=Calculator-POC" >> $GITHUB_ENV
           echo "BUILD_NAME=Calculator-POC-${GITHUB_RUN_NUMBER}" >> $GITHUB_ENV
-          echo "REVISION=${GITHUB_REF_NAME}-${$(echo $GITHUB_SHA | cut -c1-7)}" >> $GITHUB_ENV
+          echo "REVISION=${GITHUB_REF_NAME}-${GITHUB_SHA::7}" >> $GITHUB_ENV
+          
 
       # ------------------------------------------------------------------
       # Upload Junit Results to Xray
@@ -91,7 +92,7 @@ jobs:
             -H "Authorization: Bearer $XRAY_TOKEN" \
             -H "Content-Type: text/xml" \
             --data-binary @"$report" \
-            "https://xray.cloud.getxray.app/api/v2/import/execution/junit?projectKey=${XRAY_PROJECT_KEY}&testExecKey=${XRAY_EXEC_KEY}"
+            "https://xray.cloud.getxray.app/api/v2/import/execution/junit?projectKey=${XRAY_PROJECT_KEY}"
           done 
 
       - name: Build Docker Image
