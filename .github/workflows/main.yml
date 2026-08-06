@@ -97,8 +97,8 @@ jobs:
           docker build \
             -t calculator:${{ github.sha }} .
 
+
       - name: Login to Docker Registry
-        if: ${{ secrets.DOCKER_REGISTRY != '' && secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != '' }}
         uses: docker/login-action@v5
         with:
           registry: ${{ secrets.DOCKER_REGISTRY }}
@@ -106,7 +106,6 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Tag and Push Docker Image (to Nexus / Registry)
-        if: ${{ secrets.DOCKER_REGISTRY != '' && secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != '' }}
         run: |
           REG=${{ secrets.DOCKER_REGISTRY }}
           IMAGE=${REG}/${{ github.repository }}:${{ github.sha }}
