@@ -50,6 +50,13 @@ jobs:
           docker build --target runtime \
             -t calculator:${{ github.sha }} .
 
+      - name: Debug Target Folder
+        run: |
+          echo "Current Workspace"
+          pwd
+          echo "Target Contents"
+          ls -R target || true
+
       # ------------------------------------------------------------------
       # Get Xray Token
       # ------------------------------------------------------------------
