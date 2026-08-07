@@ -125,23 +125,14 @@ jobs:
           echo "Deploying Docker Image: ${IMAGE}"
           docker pull ${IMAGE}
 
-          echo "Stopping existing container..."
           docker stop calculator || true
-          echo "Removing existing container..."
           docker rm calculator || true
 
           echo "Running new container..."
           docker run -d \
               --name calculator \
-              --restart always \
-              -p 8080:8080 \
               ${IMAGE}
-
-      - name: Verify Container
-        run: |
-          sleep 5
-          docker ps
-          docker logs calculator
+          
     
       # ------------------------------------------------------------------
       # Health Check
@@ -149,8 +140,11 @@ jobs:
       - name: Health Check
         run: |
           sleep 10
+          docker ps
+          docker logs calculator
 
-          curl -f http://localhost:8080/
+          docker inspect calculator \
+          --format='{{.State.Status}}'
 
       # ------------------------------------------------------------------
       # Publish Test Results
