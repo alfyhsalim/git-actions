@@ -115,6 +115,64 @@ jobs:
           docker tag calculator:${{ github.sha }} ${IMAGE}
           docker push ${IMAGE}
 
+
+      # ------------------------------------------------------------------
+      # Deploy Container
+      # ------------------------------------------------------------------
+      - name: Deploy Container
+        if: ${{ secrets.DEPLOY_HOST != '' }}
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          script: |
+            IMAGE=${{ secrets.DOCKER_REGISTRY }}/ash0482/github-poc:${{ github.sha }}
+
+            docker pull ${IMAGE}
+
+            docker stop calculator || true
+            docker rm calculator || true
+
+            docker run -d \
+              --name calculator \
+              --restart always \
+              -p 8080:8080 \
+              ${IMAGE}
+
+      # ------------------------------------------------------------------
+      # Health Check
+      # ------------------------------------------------------------------
+      - name: Health Check
+        if: ${{ secrets.DEPLOY_HOST != '' }}
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_PRIVATE_KEY }}
+          script: |
+            for i in $(seq 1 12)
+            do
+              HTTP_CODE=$(curl \
+                -s \
+                -o /dev/null \
+                -w "%{http_code}" \
+                http://localhost:8080/)
+
+              echo "HTTP_CODE=${HTTP_CODE}"
+
+              if [ "${HTTP_CODE}" = "200" ]
+              then
+                echo "Application Healthy"
+                exit 0
+              fi
+
+              sleep 5
+            done
+
+            echo "Application Health Check Failed"
+            exit 1
+
       # ------------------------------------------------------------------
       # Publish Test Results
       # ------------------------------------------------------------------
