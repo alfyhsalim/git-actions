@@ -51,6 +51,15 @@
                         </goals>
                         <configuration>
                             <xml>true</xml>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>jacoco-check</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
                             <rules>
                                 <rule>
                                     <element>BUNDLE</element>

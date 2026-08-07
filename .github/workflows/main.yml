@@ -135,16 +135,24 @@ jobs:
               -p 8080:8080 \
               ${IMAGE}
 
+      - name: Verify Container
+        run: |
+          docker ps
+    
       # ------------------------------------------------------------------
       # Health Check
       # ------------------------------------------------------------------
       - name: Health Check
         uses: appleboy/ssh-action@v1.0.3
-        with:
+        run: |
           sleep 10
 
           curl -f http://localhost:8080/
-          
+      
+      - name: View Logs
+        run: |
+          docker logs calculator
+
       # ------------------------------------------------------------------
       # Publish Test Results
       # ------------------------------------------------------------------
