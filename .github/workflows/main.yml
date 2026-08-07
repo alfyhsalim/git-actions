@@ -121,15 +121,19 @@ jobs:
       # ------------------------------------------------------------------
       - name: Deploy Container
         uses: appleboy/ssh-action@v1.0.3
-        run: |
+        with:
             IMAGE=${{ secrets.DOCKER_REGISTRY }}/ash0482/github-poc:${{ github.sha }}
+        run: |
+          echo "Deploying Docker Image: ${IMAGE}"
+          docker pull ${IMAGE}
 
-            docker pull ${IMAGE}
+          echo "Stopping existing container..."
+          docker stop calculator || true
+          echo "Removing existing container..."
+          docker rm calculator || true
 
-            docker stop calculator || true
-            docker rm calculator || true
-
-            docker run -d \
+          echo "Running new container..."
+          docker run -d \
               --name calculator \
               --restart always \
               -p 8080:8080 \
