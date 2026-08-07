@@ -121,7 +121,7 @@ jobs:
       # ------------------------------------------------------------------
       - name: Deploy Container
         uses: appleboy/ssh-action@v1.0.3
-        with:
+        run: |
             IMAGE=${{ secrets.DOCKER_REGISTRY }}/ash0482/github-poc:${{ github.sha }}
 
             docker pull ${IMAGE}
