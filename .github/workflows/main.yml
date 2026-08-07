@@ -120,10 +120,8 @@ jobs:
       # Deploy Container
       # ------------------------------------------------------------------
       - name: Deploy Container
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-            IMAGE=${{ secrets.DOCKER_REGISTRY }}/ash0482/github-poc:${{ github.sha }}
         run: |
+            IMAGE=${{ secrets.DOCKER_REGISTRY }}/ash0482/github-poc:${{ github.sha }}
           echo "Deploying Docker Image: ${IMAGE}"
           docker pull ${IMAGE}
 
@@ -141,7 +139,9 @@ jobs:
 
       - name: Verify Container
         run: |
+          sleep 5
           docker ps
+          docker logs calculator
     
       # ------------------------------------------------------------------
       # Health Check
@@ -152,10 +152,6 @@ jobs:
           sleep 10
 
           curl -f http://localhost:8080/
-      
-      - name: View Logs
-        run: |
-          docker logs calculator
 
       # ------------------------------------------------------------------
       # Publish Test Results
