@@ -147,7 +147,6 @@ jobs:
       # Health Check
       # ------------------------------------------------------------------
       - name: Health Check
-        uses: appleboy/ssh-action@v1.0.3
         run: |
           sleep 10
 
