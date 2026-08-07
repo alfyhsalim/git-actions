@@ -121,7 +121,7 @@ jobs:
       # ------------------------------------------------------------------
       - name: Deploy Container
         run: |
-            IMAGE=${{ secrets.DOCKER_REGISTRY }}/ash0482/github-poc:${{ github.sha }}
+          IMAGE=${{ secrets.DOCKER_REGISTRY }}/ash0482/github-poc:${{ github.sha }}
           echo "Deploying Docker Image: ${IMAGE}"
           docker pull ${IMAGE}
 
