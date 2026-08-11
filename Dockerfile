@@ -5,6 +5,8 @@ RUN mvn -DskipTests=true dependency:go-offline
 COPY src ./src
 RUN mvn clean verify
 
+RUN mvn org.owasp:dependency-check-maven:check
+
 FROM azul/zulu-openjdk:17-jre-headless AS runtime
 WORKDIR /app
 COPY --from=build /src/target/*.jar app.jar
