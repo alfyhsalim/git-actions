@@ -91,6 +91,9 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <skipTestScope>true</skipTestScope>
+                </configuration>
             </plugin>
         </plugins>
     </build>
