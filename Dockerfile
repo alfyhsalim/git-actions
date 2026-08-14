@@ -1,9 +1,11 @@
 FROM maven:3.9.10-amazoncorretto-17 AS build
 WORKDIR /src
 COPY pom.xml .
-RUN mvn -DskipTests=true dependency:go-offline
+RUN --mount=type=cache,target=/root/.m2\
+    mvn -DskipTests=true dependency:go-offline
 COPY src ./src
-RUN mvn clean verify
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn clean verify -X
 
 FROM azul/zulu-openjdk:17-jre-headless AS runtime
 WORKDIR /app

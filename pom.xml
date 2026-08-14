@@ -93,6 +93,11 @@
                 </executions>
                 <configuration>
                     <skipTestScope>true</skipTestScope>
+                    <composerAnalyzerEnabled>false</composerAnalyzerEnabled>
+                    <nodeAnalyzerEnabled>false</nodeAnalyzerEnabled>
+                    <rubygemsAnalyzerEnabled>false</rubygemsAnalyzerEnabled>
+                    <assemblyAnalyzerEnabled>false</assemblyAnalyzerEnabled>
+                    <nuspecAnalyzerEnabled>false</nuspecAnalyzerEnabled>
                 </configuration>
             </plugin>
         </plugins>
