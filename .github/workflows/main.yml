@@ -33,21 +33,10 @@ jobs:
       # ------------------------------------------------------------------
       # Build and test inside Maven container
       # ------------------------------------------------------------------
-      - name: Setup Docker Buildx 
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build build-stage image with cache
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          target: build
-          tags: calculator-build
-          load: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Extract target artifacts
+      - name: Build build-stage
         run: |
+          docker build --target build \
+            -t calculator-build .
           rm -rf target
           container=$(docker create calculator-build)
           docker cp ${container}:/src/target .
